@@ -57,4 +57,65 @@ impl Page {
     pub fn free_space(&self) -> usize {
         (self.free_end - self.free_start) as usize
     }
+
+    /// Số slot đang có trong page — cần cho Heap/Table sau này để biết duyệt tới đâu.
+    pub fn num_slots(&self) -> u16 {
+        self.num_slots
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn insert_and_get_roundtrip() {
+        let mut p = Page::new();
+        let slot = p.insert_tuple(b"hello").unwrap();
+        assert_eq!(p.get_tuple(slot), Some(&b"hello"[..]));
+    }
+
+    #[test]
+    fn multiple_inserts_keep_correct_data_per_slot() {
+        let mut p = Page::new();
+        let s1 = p.insert_tuple(b"first").unwrap();
+        let s2 = p.insert_tuple(b"second-longer").unwrap();
+        let s3 = p.insert_tuple(b"3").unwrap();
+
+        // Đọc lại theo thứ tự khác để chắc chắn không bị lẫn data giữa các slot
+        assert_eq!(p.get_tuple(s3), Some(&b"3"[..]));
+        assert_eq!(p.get_tuple(s1), Some(&b"first"[..]));
+        assert_eq!(p.get_tuple(s2), Some(&b"second-longer"[..]));
+    }
+
+    #[test]
+    fn insert_fails_when_full_and_does_not_corrupt_state() {
+        let mut p = Page::new();
+        let big = vec![7u8; 1000];
+        let mut count = 0;
+        while p.insert_tuple(&big).is_some() {
+            count += 1;
+        }
+        assert!(count > 0, "phải insert được ít nhất 1 lần trước khi đầy");
+
+        // Insert thêm sau khi đầy: phải trả None, không panic, không tăng num_slots
+        let slots_before = p.num_slots();
+        assert_eq!(p.insert_tuple(&big), None);
+        assert_eq!(p.num_slots(), slots_before, "insert thất bại không được làm tăng num_slots");
+    }
+
+    #[test]
+    fn get_tuple_out_of_range_returns_none() {
+        let p = Page::new();
+        assert_eq!(p.get_tuple(0), None); // chưa insert gì, slot 0 chưa tồn tại
+    }
+
+    #[test]
+    fn num_slots_tracks_successful_inserts_only() {
+        let mut p = Page::new();
+        assert_eq!(p.num_slots(), 0);
+        p.insert_tuple(b"a").unwrap();
+        p.insert_tuple(b"b").unwrap();
+        assert_eq!(p.num_slots(), 2);
+    }
 }
