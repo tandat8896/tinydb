@@ -34,7 +34,7 @@ impl Heap {
                 let offset = page_numberof as u64 * PAGE_SIZE as u64;
                 self.file.seek(SeekFrom::Start(offset))?;
                 self.file.write_all(&page.data)?;
-                return Ok((page_numberof as u32, slot));
+
             }
         }
         // 2. Nếu duyệt hết self.pages mà không page nào nhận được (hoặc self.pages đang rong

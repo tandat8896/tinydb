@@ -1,5 +1,7 @@
+
 # Upload todo() task 
 
-- [x] : insert, get deleted, freespace, 
+- [x] : insert, get  freespace, delete
+- [x] : insert data to heap and get data from heaps
 - [] : update
-- [x] : insert heap and get bytes from heaps
+- [] : i dont know 
