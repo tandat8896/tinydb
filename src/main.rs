@@ -1,4 +1,5 @@
 mod error;
+mod heap;
 mod page;
 mod row;
 
