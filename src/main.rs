@@ -16,7 +16,7 @@ fn main() {
             Some(&".insert") => {
                 let input = buf.trim();
                 if let Some(pos) = input.find(' ') {
-                    let data = input[pos+1..].trim();
+                    let data = input[pos + 1..].trim();
                     p.insert_tuple(data.as_bytes());
                     println!("Query Succes")
                 }
@@ -28,6 +28,16 @@ fn main() {
                         match p.get_tuple(slot) {
                             Some(data) => println!("{}", String::from_utf8_lossy(data)),
                             None => println!("not found or deleted"),
+                        }
+                    }
+                }
+            }
+            Some(&".delete") => {
+                if let Some(slot_str) = parts.get(1) {
+                    if let Ok(slot) = slot_str.parse::<u16>() {
+                        match p.delete_tuple(slot) {
+                            Some(data) => println!("deleted: {}", String::from_utf8_lossy(&data)),
+                            None => println!("not found or already deleted"),
                         }
                     }
                 }
