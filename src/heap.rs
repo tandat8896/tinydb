@@ -1,7 +1,6 @@
 use crate::error::DbError;
 use crate::page::{PAGE_SIZE, Page};
 use std::io::{Seek, SeekFrom, Write};
-use std::usize;
 
 pub type Tid = (u32, u16); // (page_no, slot)
 
@@ -35,6 +34,7 @@ impl Heap {
                 self.file.seek(SeekFrom::Start(offset))?;
                 self.file.write_all(&page.data)?;
 
+                return Ok((page_numberof as u32, slot));
             }
         }
         // 2. Nếu duyệt hết self.pages mà không page nào nhận được (hoặc self.pages đang rong
@@ -45,7 +45,7 @@ impl Heap {
         // 3. Ghi PAGE đã thay đổi (page_no ở trên) xuống file — write-through, ngay lập tức,không đợi gì cả:
         let offset = page_numberof as u64 * PAGE_SIZE as u64;
         self.file.seek(SeekFrom::Start(offset))?;
-        self.file.write_all((&self.pages[page_numberof].data))?;
+        self.file.write_all(&self.pages[page_numberof].data)?;
         // 4. Trả Ok((page_no as u32, slot)).
         return Ok((page_numberof as u32, slot));
     }
@@ -69,7 +69,7 @@ impl Heap {
     /// Cần cho Checkpoint 7 (REINDEX khi open): Table::open() phải biết heap có bao nhiêu
     /// page để duyệt hết. Chỉ đơn giản là độ dài của self.pages.
     pub fn num_pages(&self) -> u32 {
-        self.num_pages().len as u32;
+        self.pages.len() as u32
     }
 }
 

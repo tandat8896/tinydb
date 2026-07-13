@@ -1,3 +1,4 @@
+mod btree;
 mod error;
 mod heap;
 mod page;
