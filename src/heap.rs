@@ -69,7 +69,7 @@ impl Heap {
     /// Cần cho Checkpoint 7 (REINDEX khi open): Table::open() phải biết heap có bao nhiêu
     /// page để duyệt hết. Chỉ đơn giản là độ dài của self.pages.
     pub fn num_pages(&self) -> u32 {
-        todo!()
+        self.num_pages().len as u32;
     }
 }
 
