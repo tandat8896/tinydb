@@ -12,3 +12,10 @@ fn insert_then_get_returns_value() {
     tree.insert(42, "hello");
     assert_eq!(tree.get(&42), Some(&"hello"));
 }
+
+#[test]
+fn insert_keys_get_data() {
+    let mut tree = BPlusTree::new(4);
+    tree.insert(10, "a");
+    assert_eq!(tree.get(&10), Some(&"a"));
+}
