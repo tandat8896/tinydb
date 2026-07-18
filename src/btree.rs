@@ -87,7 +87,10 @@ impl<K: Ord + Clone, V> BPlusTree<K, V> {
             // Bước 1: đọc i, child_id — borrow ngắn, tự kết thúc ngay dòng này
             let (i, child_id) = match &self.arena[node_id] {
                 Node::Internal { keys, children } => {
-                    let i = keys.binary_search(&key).unwrap_or_else(|i| i);
+                    let i = match keys.binary_search(&key) {
+                        Ok(i) => i + 1,
+                        Err(i) => i,
+                    };
                     (i, children[i])
                 }
                 Node::Leaf { .. } => unreachable!(),
@@ -108,9 +111,9 @@ impl<K: Ord + Clone, V> BPlusTree<K, V> {
                             None
                         } else {
                             let mid = self.order / 2;
-                            let new_keys = keys.split_off(mid);
+                            let mut new_keys = keys.split_off(mid);
                             let new_children = children.split_off(mid + 1);
-                            let separator = keys.pop().unwrap();
+                            let separator = new_keys.remove(0);
                             let new_internal = Node::Internal {
                                 keys: new_keys,
                                 children: new_children,
