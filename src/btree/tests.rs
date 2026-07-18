@@ -1,5 +1,5 @@
 use super::*;
-//conflict luc lam viec 
+//conflict luc lam viec
 #[test]
 fn get_missing_key_returns_none() {
     let tree: BPlusTree<i32, &str> = BPlusTree::new(4);
@@ -66,13 +66,25 @@ fn insert_reverse_order() {
 
 #[test]
 fn internal_node_split() {
-    let mut tree  = BPlusTree::new(2);
+    let mut tree = BPlusTree::new(2);
     for i in 1..=10 {
-        tree.insert(i , i*10);
+        tree.insert(i, i * 10);
     }
     for i in 1..=10 {
-        assert_eq!(tree.get(&i), Some(&(i*10)));
+        assert_eq!(tree.get(&i), Some(&(i * 10)));
         assert_eq!(tree.get(&0), None);
         assert_eq!(tree.get(&11), None)
+    }
+}
+
+#[test]
+fn insert_random_order() {
+    let mut tree = BPlusTree::new(3);
+    let keys = [5, 1, 4, 2, 3];
+    for &k in &keys {
+        tree.insert(k, k * 100);
+    }
+    for &k in &keys {
+        assert_eq!(tree.get(&k), Some(&(k * 100)));
     }
 }
