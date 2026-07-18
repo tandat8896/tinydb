@@ -1,5 +1,5 @@
 // use std::collections::btree_map::Keys
-// write implenmentation for btree index write for conflict
+// SCRUM-13: da hoan thanh implementation btree, sua tu branch SCRUM-13
 
 pub type NodeId = usize;
 
