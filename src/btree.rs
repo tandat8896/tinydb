@@ -20,7 +20,7 @@ pub struct BPlusTree<K, V> {
     arena: Vec<Node<K, V>>,
 }
 
-impl<K: Ord, V> BPlusTree<K, V> {
+impl<K: Ord + Clone, V> BPlusTree<K, V> {
     pub fn new(order: usize) -> Self {
         Self {
             order,
@@ -37,7 +37,10 @@ impl<K: Ord, V> BPlusTree<K, V> {
         loop {
             match &self.arena[node_id] {
                 Node::Internal { keys, children } => {
-                    let i = keys.binary_search(key).unwrap_or_else(|i| i);
+                    let i = match keys.binary_search(key) {
+                        Ok(i) => i + 1, // key bằng separator → rẽ phải
+                        Err(i) => i,
+                    };
                     node_id = children[i];
                 }
                 Node::Leaf { keys, values, .. } => {
@@ -69,7 +72,7 @@ impl<K: Ord, V> BPlusTree<K, V> {
                         let mid = self.order / 2;
                         let new_keys = keys.split_off(mid);
                         let new_values = values.split_off(mid);
-                        let separator = keys.pop().unwrap();
+                        let separator = new_keys[0].clone();
                         let new_leaf = Node::Leaf {
                             keys: new_keys,
                             values: new_values,

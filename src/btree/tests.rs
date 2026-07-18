@@ -19,3 +19,50 @@ fn insert_keys_get_data() {
     tree.insert(10, "a");
     assert_eq!(tree.get(&10), Some(&"a"));
 }
+
+#[test]
+fn insert_causes_leaf_split() {
+    let mut tree = BPlusTree::new(2);
+    tree.insert(1, "a");
+    tree.insert(2, "b");
+    tree.insert(3, "c");
+    assert_eq!(tree.get(&1), Some(&"a"));
+    assert_eq!(tree.get(&2), Some(&"b"));
+    assert_eq!(tree.get(&3), Some(&"c"));
+}
+
+#[test]
+fn insert_many_keys_causes_multiple_splits() {
+    let mut tree = BPlusTree::new(2);
+    for i in 1..=6 {
+        tree.insert(i, i * 10);
+    }
+    for i in 1..=6 {
+        assert_eq!(tree.get(&i), Some(&(i * 10)));
+    }
+    assert_eq!(tree.get(&7), None);
+}
+
+#[test]
+fn get_missing_key_after_split() {
+    let mut tree = BPlusTree::new(2);
+    tree.insert(1, "a");
+    tree.insert(3, "c");
+    assert_eq!(tree.get(&2), None);
+    assert_eq!(tree.get(&1), Some(&"a"));
+    assert_eq!(tree.get(&3), Some(&"c"));
+}
+
+#[test]
+fn insert_reverse_order() {
+    let mut tree = BPlusTree::new(3);
+    for i in (1..=5).rev() {
+        tree.insert(i, i * 100);
+    }
+    for i in 1..=5 {
+        assert_eq!(tree.get(&i), Some(&(i * 100)));
+    }
+}
+
+#[test]
+
