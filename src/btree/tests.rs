@@ -65,4 +65,14 @@ fn insert_reverse_order() {
 }
 
 #[test]
-
+fn internal_node_split() {
+    let mut tree  = BPlusTree::new(2);
+    for i in 1..=10 {
+        tree.insert(i , i*10);
+    }
+    for i in 1..=10 {
+        assert_eq!(tree.get(&i), Some(&(i*10)));
+        assert_eq!(tree.get(&0), None);
+        assert_eq!(tree.get(&11), None)
+    }
+}
