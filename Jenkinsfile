@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'tandat8896' }
 
     options {
         timestamps()
