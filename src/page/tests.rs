@@ -81,7 +81,6 @@ fn delete_same_slot_twice() {
     assert_eq!(p.delete_tuple(slot), None);
 }
 
-
 #[test]
 fn delete_out_of_range() {
     let mut p = Page::new();
