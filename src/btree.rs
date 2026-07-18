@@ -1,5 +1,5 @@
 // use std::collections::btree_map::Keys
-// SCRUM-13: da hoan thanh implementation btree, sua tu branch SCRUM-13
+// stagging: btree implementation stable, merged tu nhieu branch
 
 pub type NodeId = usize;
 
