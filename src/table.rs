@@ -1,23 +1,24 @@
 use crate::btree::BPlusTree;
 use crate::error::DbError;
 use crate::heap::Heap;
+use crate::heap::Tid;
 use crate::row::Row;
-//prefereces vault checkpoint 6
+
 pub struct Table {
     heap: Heap,
-    index: BPlusTree,
+    index: BPlusTree<i64, Tid>,
 }
 
 impl Table {
     pub fn create(path: &str) -> Result<Self, DbError> {
         let heap = Heap::create(path)?;
         let index = BPlusTree::new(4);
-        OK(Self { heap, index })
+        Ok(Self { heap, index })
     }
 
     pub fn insert(&mut self, row: Row) -> Result<(), DbError> {
-        let mut bytes = Row.encode();
-        let tid = self.heap.insert(&byte)?;
+        let bytes = row.encode();
+        let tid = self.heap.insert(&bytes)?;
         self.index.insert(row.id, tid);
         Ok(())
     }
@@ -27,9 +28,8 @@ impl Table {
             Some(tid) => tid,
             None => return Ok(None),
         };
-        let bytes = self.heap.get(tid);
-
-        let row = Row::decode(&byte);
+        let bytes = self.heap.get(tid)?;
+        let row = Row::decode(&bytes)?;
         Ok(Some(row))
     }
 }
