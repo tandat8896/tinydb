@@ -3,6 +3,7 @@ mod error;
 mod heap;
 mod page;
 mod row;
+mod table;
 
 use page::Page;
 use std::io::{self, Write};
