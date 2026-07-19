@@ -54,6 +54,13 @@ impl Table {
             }
         }
         Ok(Self { heap, index })
+        let bytes = self.heap.get(tid);
+
+        let row = Row::decode(&byte);
+        Ok(Some(row))
+        let bytes = self.heap.get(tid)?;
+        let row = Row::decode(&bytes)?;
+        Ok(Some(row))
     }
 }
 
