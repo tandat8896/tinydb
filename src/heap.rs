@@ -1,6 +1,7 @@
 use crate::error::DbError;
 use crate::page::{PAGE_SIZE, Page};
-use std::io::{Seek, SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
+use std::usize;
 
 pub type Tid = (u32, u16); // (page_no, slot)
 
@@ -25,15 +26,31 @@ impl Heap {
         })
     }
 
+    pub fn open(path: &str) -> Result<Self, DbError> {
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(path)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let mut pages = Vec::new();
+        for chunk in buf.chunks(PAGE_SIZE) {
+            let mut data = [0u8; PAGE_SIZE];
+            data[..chunk.len()].copy_from_slice(chunk);
+            pages.push(Page::from_data(data));
+        }
+        Ok(Heap { file, pages })
+    }
+
     /// Thuật toán (đã chốt trong plan — free-list tuyến tính + high-water mark):
     pub fn insert(&mut self, bytes: &[u8]) -> Result<Tid, DbError> {
         // 1. Duyệt tuần tự self.pages (free-list đơn giản nhất): với từng page ở index i,
         for (page_numberof, page) in self.pages.iter_mut().enumerate() {
-            if let Some(slot) = page.insert_tuple(bytes) {
+            if let Some(slot) = page.insert_tuple(bytes){
+                page.sync_header();
                 let offset = page_numberof as u64 * PAGE_SIZE as u64;
                 self.file.seek(SeekFrom::Start(offset))?;
                 self.file.write_all(&page.data)?;
-
                 return Ok((page_numberof as u32, slot));
             }
         }
@@ -45,7 +62,9 @@ impl Heap {
         // 3. Ghi PAGE đã thay đổi (page_no ở trên) xuống file — write-through, ngay lập tức,không đợi gì cả:
         let offset = page_numberof as u64 * PAGE_SIZE as u64;
         self.file.seek(SeekFrom::Start(offset))?;
-        self.file.write_all(&self.pages[page_numberof].data)?;
+        self.pages[page_numberof].sync_header();
+        self.file
+            .write_all(&self.pages[page_numberof].data)?;
         // 4. Trả Ok((page_no as u32, slot)).
         return Ok((page_numberof as u32, slot));
     }
@@ -70,6 +89,12 @@ impl Heap {
     /// page để duyệt hết. Chỉ đơn giản là độ dài của self.pages.
     pub fn num_pages(&self) -> u32 {
         self.pages.len() as u32
+    }
+
+    pub fn get_page_slots(&self, page_numberof: u32) -> Option<u16> {
+        self.pages
+            .get(page_numberof as usize)
+            .map(|p| p.num_slots())
     }
 }
 
