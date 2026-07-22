@@ -12,9 +12,15 @@ impl Page {
         Page {
             data: [0; PAGE_SIZE],
             num_slots: 0,
-            free_start: 0,
+            free_start: 6,
             free_end: PAGE_SIZE as u16,
         }
+    }
+
+    pub fn sync_header(&mut self) {
+        self.data[0..2].copy_from_slice(&self.num_slots.to_le_bytes());
+        self.data[2..4].copy_from_slice(&self.free_start.to_le_bytes());
+        self.data[4..6].copy_from_slice(&self.free_end.to_le_bytes());
     }
     pub fn insert_tuple(&mut self, bytes: &[u8]) -> Option<u16> {
         let slot_size: u16 = 4;
@@ -37,7 +43,7 @@ impl Page {
         if slot_idx >= self.num_slots {
             return None;
         }
-        let pos = slot_idx as usize * 4;
+        let pos = 6 + slot_idx as usize * 4;
         let offset = u16::from_le_bytes([self.data[pos], self.data[pos + 1]]);
         let length = u16::from_le_bytes([self.data[pos + 2], self.data[pos + 3]]);
         if offset == 0 {
@@ -51,7 +57,7 @@ impl Page {
             return None;
         }
         // 2. copy data ra Vec: let data = self.data[offset..][..length].to_vec();
-        let pos = slot_idx as usize * 4;
+        let pos = 6 + slot_idx as usize * 4;
         // 3. set offset = 0 trong slot: self.data[pos..pos+2] = [0, 0];
         let offset = u16::from_le_bytes([self.data[pos], self.data[pos + 1]]);
         let length = u16::from_le_bytes([self.data[pos + 2], self.data[pos + 3]]);
@@ -70,6 +76,18 @@ impl Page {
     /// Số slot đang có trong page — cần cho Heap/Table sau này để biết duyệt tới đâu.
     pub fn num_slots(&self) -> u16 {
         self.num_slots
+    }
+
+    pub fn from_data(data: [u8; PAGE_SIZE]) -> Self {
+        let num_slots = u16::from_le_bytes([data[0], data[1]]);
+        let free_start = u16::from_le_bytes([data[2], data[3]]);
+        let free_end = u16::from_le_bytes([data[4], data[5]]);
+        Page {
+            data,
+            num_slots,
+            free_start,
+            free_end,
+        }
     }
 }
 
