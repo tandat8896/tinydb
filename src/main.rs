@@ -1,55 +1,54 @@
 mod btree;
 mod error;
+mod executor;
 mod heap;
 mod page;
+mod query;
 mod row;
 mod table;
+mod wal;
 
-use page::Page;
-use std::io::{self, Write};
+use std::io::{self, BufRead, Write};
+use crate::executor::execute;
+use crate::query::{lex, parse};
+use crate::table::Table;
+
 fn main() {
-    let mut p = Page::new();
+    let mut table = Table::create("tinydb.dat").unwrap();
+    let stdin = io::stdin();
+
+    println!("tinydb> SQL REPL — type 'exit' to quit");
+    println!("Commands: INSERT INTO t (id, name) VALUES (1, \"alice\")");
+    println!("          SELECT * FROM t WHERE id = 1");
     loop {
         print!("tinydb> ");
         io::stdout().flush().unwrap();
-        let mut buf = String::new();
-        io::stdin().read_line(&mut buf).unwrap();
-        let parts: Vec<&str> = buf.trim().split_whitespace().collect();
-        match parts.first() {
-            Some(&".insert") => {
-                let input = buf.trim();
-                if let Some(pos) = input.find(' ') {
-                    let data = input[pos + 1..].trim();
-                    p.insert_tuple(data.as_bytes());
-                    println!("Query Succes")
-                }
-            }
 
-            Some(&".get") => {
-                if let Some(slot_str) = parts.get(1) {
-                    if let Ok(slot) = slot_str.parse::<u16>() {
-                        match p.get_tuple(slot) {
-                            Some(data) => println!("{}", String::from_utf8_lossy(data)),
-                            None => println!("not found or deleted"),
-                        }
-                    }
-                }
+        let mut line = String::new();
+        match stdin.lock().read_line(&mut line) {
+            Ok(0) => break, // EOF
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Error reading input: {}", e);
+                break;
             }
-            Some(&".delete") => {
-                if let Some(slot_str) = parts.get(1) {
-                    if let Ok(slot) = slot_str.parse::<u16>() {
-                        match p.delete_tuple(slot) {
-                            Some(data) => println!("deleted: {}", String::from_utf8_lossy(&data)),
-                            None => println!("not found or already deleted"),
-                        }
-                    }
-                }
-            }
-            Some(&".free") => {
-                println!("free space: {}", p.free_space());
-            }
-            Some(&".exit") => break,
-            _ => println!(".insert <text> | .get <slot> | .free | .exit"),
+        }
+
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if line == "exit" || line == "quit" {
+            break;
+        }
+
+        let tokens = lex(line);
+        match parse(&tokens) {
+            Ok(stmt) => match execute(stmt, &mut table) {
+                Ok(msg) => println!("{}", msg),
+                Err(e) => println!("Error: {}", e),
+            },
+            Err(e) => println!("Parse error: {}", e),
         }
     }
 }

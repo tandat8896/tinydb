@@ -54,34 +54,6 @@ impl Table {
             }
         }
         Ok(Self { heap, index })
-        let row = Row::decode(&bytes)?;
-        Ok(Some(row))
-        let bytes = self.heap.get(*tid)?;
-        match bytes {
-            Some(b) => {
-                let row = Row::decode(b)?;
-
-                return Ok(Some(row));
-            }
-            None => Ok(None),
-        }
-        // Ok(Some(row)) sai
-    }
-
-    pub fn open(path: &str) -> Result<Self, DbError> {
-        let heap = Heap::open(path)?;
-        let mut index = BPlusTree::new(4);
-        for page_no in 0..heap.num_pages() {
-            let num_slots = heap.get_page_slots(page_no).unwrap_or(0);
-            for slot in 0..num_slots {
-                let tid = (page_no, slot);
-                if let Some(bytes) = heap.get(tid)? {
-                    let row = Row::decode(bytes)?;
-                    index.insert(row.id, tid);
-                }
-            }
-        }
-        Ok(Self { heap, index })
     }
 }
 
